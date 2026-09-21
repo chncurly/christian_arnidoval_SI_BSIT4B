@@ -1,3 +1,19 @@
+
+or create a new repository on the command line
+
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/chncurly/push-guide.git
+git push -u origin main
+
+or push an existing repository from the command line
+
+git remote add origin https://github.com/chncurly/push-guide.git
+git branch -M main
+git push -u origin main
+
 # Nuxt Minimal Starter
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
