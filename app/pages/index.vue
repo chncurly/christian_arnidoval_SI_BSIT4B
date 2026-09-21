@@ -1,34 +1,30 @@
 <template>
- <v-container>
- <v-card v-if="user" class="pa-6">
- <div class="d-flex align-center ga-4">
- <v-avatar size="64">
- <v-img :src="user.picture" />
- </v-avatar>
- <div>
- <h2>{{ user.name }}</h2>
- <p>{{ user.email }}</p>
- 
- </div>
- </div>
- <v-btn color="error" @click="logout">
- Logout
-</v-btn>
- </v-card>
- </v-container>
+  <v-layout class="rounded rounded-md" style="min-height: 100vh;">
+    <v-main class="d-flex align-center justify-center">
+      <v-container class="fill-height d-flex align-center justify-center">
+      </v-container>
+    </v-main>
+  </v-layout>
 </template>
-<script setup lang="ts">
-const user = ref<any>(null)
-onMounted(() => {
- const savedUser = localStorage.getItem('google_user')
- if (savedUser) {
- user.value = JSON.parse(savedUser)
- }
-})
-const logout = () => {
- localStorage.removeItem('google_user')
- localStorage.removeItem('google_token')
- navigateTo('/login')
-}
 
+<script setup lang="ts">
+//@ts-nocheck
+const user = ref<any>(null)
+
+onMounted(() => {
+  const savedUser = localStorage.getItem('google_user')
+
+  if (savedUser) {
+    user.value = JSON.parse(savedUser)
+  } else {
+    // Awtomatikong ipapadala sa /login kapag walang naka-save na user
+    navigateTo('/login')
+  }
+})
+
+const logout = () => {
+  localStorage.removeItem('google_user')
+  localStorage.removeItem('google_token')
+  navigateTo('/login')
+}
 </script>
