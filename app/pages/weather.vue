@@ -60,7 +60,11 @@
 
 </template>
 
+
 <script setup>
+
+const currentTemp = ref(0)
+
 import { ref } from 'vue'
 
 const city = ref('Manila')
@@ -79,6 +83,24 @@ const weeklyForecast = [
   { day: 'thu', icon: '☀️', max: 31, min: 18 },
   { day: 'fri', icon: '🌤️', max: 31, min: 18 }
 ]
+
+const getWeather = async () => {
+  try{
+    const response = await $fetch('http://api.weatherapi.com/v1/current.json?key=7fd5ed1565254fdbbd305855262610&q=San+Fernando&aqi=no')
+    if(response){
+      console.log('Successfully Fetched!', response)
+      console.log('Current Weather Object', response.current)
+      currentTemp.value = response.current
+    }
+  }catch (err) {
+    console.error('Error Loading api', err)
+  }
+}
+
+onMounted(async () =>{
+  getWeather()
+});
+
 </script>
 
 <style scoped>
