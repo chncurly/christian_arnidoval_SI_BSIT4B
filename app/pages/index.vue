@@ -38,4 +38,4 @@ const logout = () => {
  navigateTo('/login')
 }
 
-</script> 
+</script>
