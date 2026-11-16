@@ -152,7 +152,7 @@
 import { ref, onMounted } from 'vue'
 
 // API KEY
-const API_KEY = 'YOUR_API_KEY'
+const API_KEY = 'http://api.weatherapi.com/v1/current.json?key=7fd5ed1565254fdbbd305855262610&q=San+Fernando&aqi=no'
 
 // Variables
 const city = ref('Manila')
