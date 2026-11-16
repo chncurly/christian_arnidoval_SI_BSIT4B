@@ -1,276 +1,122 @@
-
 <template>
   <main class="weather-page">
     <section class="weather-card">
-
-      <!-- Header -->
+      
       <header class="header">
         <div class="location">
           <h1>{{ city }}</h1>
-          <span>Weather Forecast</span>
+          
         </div>
       </header>
 
-      <!-- Search -->
-      <div class="search-container">
-        <input
-          v-model="searchCity"
-          type="text"
-          placeholder="Enter city..."
-          @keyup.enter="getWeather"
-        />
-
-        <button
-          @click="getWeather"
-          :disabled="loading || !searchCity.trim()"
-        >
-          {{ loading ? 'Loading...' : 'Search' }}
-        </button>
-      </div>
-
-      <p v-if="errorMessage" class="error-message">
-        {{ errorMessage }}
-      </p>
-
-      <!-- Current Weather -->
-      <section v-if="weather" class="current-weather">
+      <section class="current-weather">
         <div class="main-info">
-
           <div class="condition">
-            <img
-              :src="'https:' + weather.condition.icon"
-              alt="Weather icon"
-            />
-            <span>{{ weather.condition.text }}</span>
+            <span class="sun-icon">☼</span>
+            <span>Sunny</span>
           </div>
 
-          <div class="temperature">
-            {{ Math.round(weather.temp_c) }}°
-          </div>
+          <div class="temperature">28°</div>
 
           <div class="sun-details">
-            <span>
-              Feels like: {{ Math.round(weather.feelslike_c) }}°
-            </span>
+            <span>↟ 29°</span>
+            <span>↓ 18°</span>
           </div>
-
-          <div class="weather-info">
-            <div>
-              <span>Humidity</span>
-              <span>{{ weather.humidity }}%</span>
-            </div>
-
-            <div>
-              <span>Wind Speed</span>
-              <span>{{ weather.wind_kph }} km/h</span>
-            </div>
-
-            <div>
-              <span>UV Index</span>
-              <span>{{ weather.uv }}</span>
-            </div>
-          </div>
-
         </div>
       </section>
 
-      <!-- Hourly Forecast -->
-      <section
-        v-if="hourlyForecast.length"
-        class="hourly-section"
-      >
-        <h3>Hourly Forecast</h3>
-
+      <!-- Hourly forecast -->
+      <section class="hourly-section">
         <div class="hourly-list">
           <article
             v-for="hour in hourlyForecast"
             :key="hour.time"
             class="hour-item"
           >
-            <div class="hour-temp">
-              {{ Math.round(hour.temp_c) }}°
-            </div>
-
-            <div class="hour-icon">
-              <img
-                :src="'https:' + hour.condition.icon"
-                alt="Weather"
-              />
-            </div>
-
-            <div class="hour-time">
-              {{ hour.time.split(' ')[1] }}
-            </div>
+            <div class="hour-temp">{{ hour.temp }}</div>
+            <div class="hour-icon">{{ hour.icon }}</div>
+            <div class="hour-time">{{ hour.time }}</div>
           </article>
         </div>
       </section>
 
-      <!-- Weekly Forecast -->
-      <section
-        v-if="weeklyForecast.length"
-        class="weekly-section"
-      >
-        <h3>Weekly Forecast</h3>
-
+      <!-- Weekly forecast -->
+      <section class="weekly-section">
         <article
           v-for="day in weeklyForecast"
-          :key="day.date"
+          :key="day.day"
           class="day-row"
         >
-          <span class="day-name">
-            {{ day.day }}
-          </span>
-
-          <span class="day-icon">
-            <img
-              :src="'https:' + day.condition.icon"
-              alt="Weather"
-            />
-          </span>
-
+          <span class="day-name">{{ day.day }}</span>
+          <span class="day-icon">{{ day.icon }}</span>
           <div class="day-temps">
-            <span class="day-max">
-              {{ Math.round(day.max) }}°
-            </span>
-
-            <span class="day-min">
-              {{ Math.round(day.min) }}°
-            </span>
+            <span class="day-max">{{ day.max }}°</span>
+            <span class="day-min">{{ day.min }}°</span>
           </div>
         </article>
       </section>
-
-      <p v-if="loading" class="loading">
-        Loading weather...
-      </p>
-
     </section>
   </main>
+
 </template>
 
+
 <script setup>
-import { ref, onMounted } from 'vue'
 
-// API KEY
-const API_KEY = 'http://api.weatherapi.com/v1/current.json?key=7fd5ed1565254fdbbd305855262610&q=San+Fernando&aqi=no'
+const currentTemp = ref(0)
 
-// Variables
+import { ref } from 'vue'
+
 const city = ref('Manila')
-const searchCity = ref('Manila')
 
-const weather = ref(null)
+const hourlyForecast = [
+  { time: '17:00', temp: 28, icon: '☁️' },
+  { time: '18:00', temp: 26, icon: '☁️' },
+  { time: '19:00', temp: 25, icon: '☁️' },
+  { time: '20:00', temp: 24, icon: '☁️' },
+  { time: '21:00', temp: 24, icon: '☁️' }
+]
 
-const hourlyForecast = ref([])
-const weeklyForecast = ref([])
+const weeklyForecast = [
+  { day: 'tue', icon: '☀️', max: 29, min: 18 },
+  { day: 'wed', icon: '☀️', max: 29, min: 18 },
+  { day: 'thu', icon: '☀️', max: 31, min: 18 },
+  { day: 'fri', icon: '🌤️', max: 31, min: 18 }
+]
 
-const loading = ref(false)
-const errorMessage = ref('')
-
-// Get Weather Function
 const getWeather = async () => {
-
-  if (!searchCity.value.trim()) {
-    errorMessage.value = 'Please enter a city name!'
-    return
-  }
-
-  loading.value = true
-  errorMessage.value = ''
-
-  try {
-
-    const response = await $fetch(
-      'https://api.weatherapi.com/v1/forecast.json',
-      {
-        params: {
-          key: API_KEY,
-          q: searchCity.value.trim(),
-          days: 7,
-          aqi: 'no',
-          alerts: 'no'
-        }
-      }
-    )
-
-    // Update City
-    city.value = response.location.name
-
-    // Update Current Weather
-    weather.value = response.current
-
-    // Hourly Forecast
-    const currentHour = response.location.localtime
-      .split(' ')[1]
-
-    const currentDate = response.location.localtime
-      .split(' ')[0]
-
-    const todayHours =
-      response.forecast.forecastday[0].hour
-
-    hourlyForecast.value = todayHours
-      .filter(hour => {
-        return (
-          hour.time.split(' ')[1] >= currentHour
-        )
-      })
-      .slice(0, 5)
-
-    // Weekly Forecast
-    weeklyForecast.value =
-      response.forecast.forecastday.map(day => {
-
-        const date = new Date(day.date + 'T00:00:00')
-
-        return {
-          date: day.date,
-          day: date.toLocaleDateString('en-US', {
-            weekday: 'short'
-          }),
-          max: day.day.maxtemp_c,
-          min: day.day.mintemp_c,
-          condition: day.day.condition
-        }
-
-      })
-
-  } catch (error) {
-
-    weather.value = null
-    hourlyForecast.value = []
-    weeklyForecast.value = []
-
-    errorMessage.value =
-      'City not found! Please try another city.'
-
-    console.error('Weather API Error:', error)
-
-  } finally {
-
-    loading.value = false
-
+  try{
+    const response = await $fetch('http://api.weatherapi.com/v1/current.json?key=7fd5ed1565254fdbbd305855262610&q=San+Fernando&aqi=no')
+    if(response){
+      console.log('Successfully Fetched!', response)
+      console.log('Current Weather Object', response.current)
+      currentTemp.value = response.current
+    }
+  }catch (err) {
+    console.error('Error Loading api', err)
   }
 }
 
-// Load Default Weather
-onMounted(() => {
+onMounted(async () =>{
   getWeather()
-})
+});
+
 </script>
 
 <style scoped>
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+
 .weather-page {
   width: 100%;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - 60px); 
   display: flex;
   font-family: 'Inter', sans-serif;
-
   background: linear-gradient(
     155deg,
     rgba(103, 126, 177, 0.94),
@@ -284,6 +130,7 @@ onMounted(() => {
   min-height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   color: #fff;
   padding: 32px 24px;
 }
@@ -303,60 +150,20 @@ onMounted(() => {
 .location h1 {
   font-size: 28px;
   font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .location span {
   display: block;
   font-size: 14px;
-  color: rgba(255,255,255,0.72);
+  color: rgba(255, 255, 255, 0.72);
   margin-top: 4px;
-}
-
-/* Search */
-.search-container {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 500px;
-  margin: 10px auto 20px;
-}
-
-.search-container input {
-  flex: 1;
-  min-width: 0;
-  padding: 12px 15px;
-  border: none;
-  outline: none;
-  border-radius: 8px;
-  font-size: 14px;
-}
-
-.search-container button {
-  padding: 12px 18px;
-  border: none;
-  border-radius: 8px;
-  background: white;
-  color: #737ac0;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.search-container button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-message {
-  text-align: center;
-  color: #ffe0e0;
-  margin-bottom: 15px;
 }
 
 /* Current Weather */
 .current-weather {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: flex-end;
   padding: 20px 0;
   max-width: 800px;
@@ -364,20 +171,16 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-.main-info {
-  width: 100%;
-}
-
 .condition {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 18px;
+  color: rgba(255, 255, 255, 0.9);
 }
 
-.condition img {
-  width: 35px;
-  height: 35px;
+.sun-icon {
+  font-size: 24px;
 }
 
 .temperature {
@@ -389,19 +192,20 @@ onMounted(() => {
 }
 
 .sun-details {
+  display: flex;
+  gap: 16px;
   font-size: 16px;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.85);
 }
 
-/* Weather Info */
 .weather-info {
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 16px 20px;
-  margin-top: 20px;
   border-radius: 16px;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
   font-size: 14px;
 }
 
@@ -416,17 +220,11 @@ onMounted(() => {
   width: 100%;
   max-width: 800px;
   margin: 20px auto;
-  border-top: 1px solid rgba(255,255,255,0.2);
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 20px;
-  padding: 16px;
-}
-
-.hourly-section h3,
-.weekly-section h3 {
-  font-size: 16px;
-  margin-bottom: 15px;
+  padding: 12px 0;
 }
 
 .hourly-list {
@@ -440,7 +238,7 @@ onMounted(() => {
   align-items: center;
   gap: 10px;
   padding: 12px 0;
-  border-right: 1px solid rgba(255,255,255,0.15);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .hour-item:last-child {
@@ -452,14 +250,13 @@ onMounted(() => {
   font-weight: 500;
 }
 
-.hour-icon img {
-  width: 35px;
-  height: 35px;
+.hour-icon {
+  font-size: 24px;
 }
 
 .hour-time {
   font-size: 13px;
-  color: rgba(255,255,255,0.75);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* Weekly Forecast */
@@ -467,7 +264,7 @@ onMounted(() => {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 16px 24px;
   display: flex;
@@ -488,9 +285,8 @@ onMounted(() => {
   width: 60px;
 }
 
-.day-icon img {
-  width: 30px;
-  height: 30px;
+.day-icon {
+  font-size: 20px;
 }
 
 .day-temps {
@@ -503,26 +299,15 @@ onMounted(() => {
 }
 
 .day-min {
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.loading {
+/* Footer */
+.footer {
+  padding-top: 24px;
   text-align: center;
-  margin: 15px;
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .weather-card {
-    padding: 24px 16px;
-  }
-
-  .temperature {
-    font-size: 80px;
-  }
-
-  .weekly-section {
-    padding: 16px;
-  }
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: rgba(255, 255, 255, 0.4);
 }
 </style>
