@@ -243,7 +243,7 @@ onMounted(() => {
 }
 
 
-/* Header */
+
 
 .header {
   display: flex;
@@ -270,7 +270,6 @@ onMounted(() => {
 }
 
 
-/* Search Bar */
 
 .search-container {
   display: flex;
@@ -338,7 +337,6 @@ onMounted(() => {
 }
 
 
-/* Current Weather */
 
 .current-weather {
   display: flex;
@@ -396,7 +394,6 @@ onMounted(() => {
 }
 
 
-/* Hourly Forecast */
 
 .hourly-section {
   width: 100%;
@@ -445,7 +442,6 @@ onMounted(() => {
 }
 
 
-/* Weekly Forecast */
 
 .weekly-section {
   width: 100%;
@@ -492,7 +488,7 @@ onMounted(() => {
 }
 
 
-/* Footer */
+
 
 .footer {
   padding-top: 24px;

@@ -9,9 +9,9 @@
       >
         <v-list>
           <v-list-item
-            prepend-avatar="https://randomuser.me/api/portraits/women/85.jpg"
-            subtitle="sandra_a88@gmailcom"
-            title="Sandra Adams"
+            prepend-avatar=""
+            subtitle="chanooh14@gmail.com"
+            title="Christian John G. Arnidoval"
           ></v-list-item>
         </v-list>
 
