@@ -1,10 +1,23 @@
 <template>
-  <v-layout class="rounded rounded-md" style="min-height: 100vh;">
-    <v-main class="d-flex align-center justify-center">
-      <v-container class="fill-height d-flex align-center justify-center">
-      </v-container>
-    </v-main>
-  </v-layout>
+     <v-container class="fill-height d-flex align-center justify-center">
+     <v-card v-if="user" width="400" class="pa-6 rounded-xl">
+      <div class="d-flex align-center ga-4 mb-4">
+        <v-avatar size="64">
+          <v-img :src="user.picture"/>
+        </v-avatar>
+
+        <div>
+          <h2>{{ user.name }}</h2>
+          <p class="text-caption text-grey">{{ user.email }}</p>
+        </div>
+      </div>
+
+      <v-btn color="error" @click="logout">
+      Logout
+      </v-btn>
+
+    </v-card>
+  </v-container>
 </template>
 
 <script setup lang="ts">
@@ -16,15 +29,13 @@ onMounted(() => {
 
   if (savedUser) {
     user.value = JSON.parse(savedUser)
-  } else {
-    // Awtomatikong ipapadala sa /login kapag walang naka-save na user
-    navigateTo('/login')
   }
 })
 
 const logout = () => {
-  localStorage.removeItem('google_user')
-  localStorage.removeItem('google_token')
-  navigateTo('/login')
+ localStorage.removeItem('google_user')
+ localStorage.removeItem('google_token')
+ navigateTo('/login')
 }
-</script>
+
+</script> 
