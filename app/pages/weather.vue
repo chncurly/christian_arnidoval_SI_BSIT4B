@@ -1,26 +1,53 @@
+
 <template>
   <main class="weather-page">
     <section class="weather-card">
-      
+
       <header class="header">
         <div class="location">
           <h1>{{ city }}</h1>
-          
         </div>
       </header>
+
+      <!-- Search Bar -->
+      <div class="search-container">
+        <input
+          v-model="searchCity"
+          type="text"
+          placeholder="Search city..."
+          @keyup.enter="searchWeather"
+        />
+
+        <button
+          @click="searchWeather"
+          :disabled="loading"
+        >
+          {{ loading ? 'Searching...' : 'Search' }}
+        </button>
+      </div>
+
+      <p v-if="loading" class="message">
+        Searching weather...
+      </p>
+
+      <p v-if="errorMessage" class="error-message">
+        {{ errorMessage }}
+      </p>
 
       <section class="current-weather">
         <div class="main-info">
           <div class="condition">
             <span class="sun-icon">☼</span>
-            <span>Sunny</span>
+            <span>{{ weatherCondition }}</span>
           </div>
 
-          <div class="temperature">28°</div>
+          <div class="temperature">
+            {{ currentTemp }}°
+          </div>
 
           <div class="sun-details">
-            <span>↟ 29°</span>
-            <span>↓ 18°</span>
+            <span>↟ {{ maxTemp }}°</span>
+            <span>↓ {{ minTemp }}°</span>
           </div>
         </div>
       </section>
@@ -33,7 +60,7 @@
             :key="hour.time"
             class="hour-item"
           >
-            <div class="hour-temp">{{ hour.temp }}</div>
+            <div class="hour-temp">{{ hour.temp }}°</div>
             <div class="hour-icon">{{ hour.icon }}</div>
             <div class="hour-time">{{ hour.time }}</div>
           </article>
@@ -49,26 +76,37 @@
         >
           <span class="day-name">{{ day.day }}</span>
           <span class="day-icon">{{ day.icon }}</span>
+
           <div class="day-temps">
             <span class="day-max">{{ day.max }}°</span>
             <span class="day-min">{{ day.min }}°</span>
           </div>
         </article>
       </section>
+
     </section>
   </main>
-
 </template>
 
 
 <script setup>
 
-const currentTemp = ref(0)
+import { ref, onMounted } from 'vue'
 
-import { ref } from 'vue'
-
+// Weather Variables
 const city = ref('Manila')
+const currentTemp = ref(0)
+const maxTemp = ref(0)
+const minTemp = ref(0)
 
+const weatherCondition = ref('Sunny')
+
+// Search Variables
+const searchCity = ref('')
+const loading = ref(false)
+const errorMessage = ref('')
+
+// Hourly Forecast
 const hourlyForecast = [
   { time: '17:00', temp: 28, icon: '☁️' },
   { time: '18:00', temp: 26, icon: '☁️' },
@@ -77,6 +115,7 @@ const hourlyForecast = [
   { time: '21:00', temp: 24, icon: '☁️' }
 ]
 
+// Weekly Forecast
 const weeklyForecast = [
   { day: 'tue', icon: '☀️', max: 29, min: 18 },
   { day: 'wed', icon: '☀️', max: 29, min: 18 },
@@ -84,24 +123,90 @@ const weeklyForecast = [
   { day: 'fri', icon: '🌤️', max: 31, min: 18 }
 ]
 
-const getWeather = async () => {
-  try{
-    const response = await $fetch('http://api.weatherapi.com/v1/current.json?key=7fd5ed1565254fdbbd305855262610&q=San+Fernando&aqi=no')
-    if(response){
+// Get Weather Function
+const getWeather = async (location = 'Manila') => {
+
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+
+    const response = await $fetch(
+      'https://api.weatherapi.com/v1/current.json',
+      {
+        params: {
+          key: '7fd5ed1565254fdbbd305855262610',
+          q: location,
+          aqi: 'no'
+        }
+      }
+    )
+
+    if (response) {
+
       console.log('Successfully Fetched!', response)
-      console.log('Current Weather Object', response.current)
-      currentTemp.value = response.current
+
+      city.value = response.location.name
+
+      currentTemp.value = Math.round(
+        response.current.temp_c
+      )
+
+      weatherCondition.value =
+        response.current.condition.text
+
+      // Current API does not provide daily high/low.
+      // Keep the existing forecast values for now.
+
+      console.log(
+        'Current Weather Object',
+        response.current
+      )
+
     }
-  }catch (err) {
-    console.error('Error Loading api', err)
+
+  } catch (err) {
+
+    console.error('Error Loading API', err)
+
+    errorMessage.value =
+      'City not found! Please try again.'
+
+  } finally {
+
+    loading.value = false
+
   }
+
 }
 
-onMounted(async () =>{
-  getWeather()
-});
+
+// Search Weather Function
+const searchWeather = async () => {
+
+  if (!searchCity.value.trim()) {
+
+    errorMessage.value =
+      'Please enter a city name!'
+
+    return
+
+  }
+
+  await getWeather(searchCity.value.trim())
+
+}
+
+
+// Load Default Weather
+onMounted(() => {
+
+  getWeather('Manila')
+
+})
 
 </script>
+
 
 <style scoped>
 
@@ -114,9 +219,10 @@ onMounted(async () =>{
 
 .weather-page {
   width: 100%;
-  min-height: calc(100vh - 60px); 
+  min-height: calc(100vh - 60px);
   display: flex;
   font-family: 'Inter', sans-serif;
+
   background: linear-gradient(
     155deg,
     rgba(103, 126, 177, 0.94),
@@ -124,6 +230,7 @@ onMounted(async () =>{
     #737ac0
   );
 }
+
 
 .weather-card {
   width: 100%;
@@ -135,7 +242,9 @@ onMounted(async () =>{
   padding: 32px 24px;
 }
 
+
 /* Header */
+
 .header {
   display: flex;
   justify-content: center;
@@ -160,7 +269,77 @@ onMounted(async () =>{
   margin-top: 4px;
 }
 
+
+/* Search Bar */
+
+.search-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 450px;
+  margin: 0 auto 20px;
+}
+
+.search-container input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 18px;
+  border: none;
+  outline: none;
+  border-radius: 25px;
+
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+
+  font-size: 14px;
+  backdrop-filter: blur(10px);
+}
+
+.search-container input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.search-container button {
+  padding: 12px 22px;
+  border: none;
+  border-radius: 25px;
+
+  background: white;
+  color: #737ac0;
+
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.search-container button:hover {
+  background: #e0e0ff;
+  transform: scale(1.05);
+}
+
+.search-container button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.error-message {
+  text-align: center;
+  color: #ffe0e0;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+
 /* Current Weather */
+
 .current-weather {
   display: flex;
   justify-content: space-between;
@@ -198,6 +377,7 @@ onMounted(async () =>{
   color: rgba(255, 255, 255, 0.85);
 }
 
+
 .weather-info {
   display: flex;
   flex-direction: column;
@@ -215,13 +395,17 @@ onMounted(async () =>{
   gap: 16px;
 }
 
+
 /* Hourly Forecast */
+
 .hourly-section {
   width: 100%;
   max-width: 800px;
   margin: 20px auto;
+
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
   background: rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 12px 0;
@@ -238,6 +422,7 @@ onMounted(async () =>{
   align-items: center;
   gap: 10px;
   padding: 12px 0;
+
   border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
@@ -259,14 +444,18 @@ onMounted(async () =>{
   color: rgba(255, 255, 255, 0.75);
 }
 
+
 /* Weekly Forecast */
+
 .weekly-section {
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
+
   background: rgba(255, 255, 255, 0.1);
   border-radius: 20px;
   padding: 16px 24px;
+
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -302,7 +491,9 @@ onMounted(async () =>{
   color: rgba(255, 255, 255, 0.6);
 }
 
+
 /* Footer */
+
 .footer {
   padding-top: 24px;
   text-align: center;
@@ -310,4 +501,28 @@ onMounted(async () =>{
   letter-spacing: 3px;
   color: rgba(255, 255, 255, 0.4);
 }
+
+
+/* Responsive Design */
+
+@media (max-width: 480px) {
+
+  .weather-card {
+    padding: 24px 16px;
+  }
+
+  .temperature {
+    font-size: 76px;
+  }
+
+  .search-container button {
+    padding: 12px 16px;
+  }
+
+  .weekly-section {
+    padding: 16px;
+  }
+
+}
+
 </style>
